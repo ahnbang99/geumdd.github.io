@@ -2,7 +2,9 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <!-- 아이폰 사파리 뷰포트 및 노치 영역 최적화 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- 홈 화면 추가(PWA) 모드 설정 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="OTT Tracker">
@@ -10,12 +12,14 @@
   
   <style>
     :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --accent-color: #f43f5e; /* OTT 시청 날짜 (빨간색) */
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
-      --success-color: #38bdf8; /* 금욕/절제 기간 성공 아이콘/텍스트 색상 */
+      /* iOS 순정 다크모드 컬러 팔레트 (푸른기 완전 제거) */
+      --bg-color: #000000;            /* OLED 트루블랙 */
+      --card-bg: #1c1c1e;            /* iOS System Grouped Background / Secondary */
+      --card-border: #2c2c2e;        /* iOS Fill / Separator */
+      --accent-color: #ff453a;       /* iOS System Red (OTT 시청 표시) */
+      --text-main: #ffffff;          /* iOS Label */
+      --text-muted: #8e8e93;         /* iOS Secondary Label */
+      --success-color: #64d2ff;      /* iOS System Cyan (성공 메세지) */
     }
 
     * {
@@ -29,7 +33,7 @@
       padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom) 16px;
       background-color: var(--bg-color);
       color: var(--text-main);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -46,101 +50,114 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
+      padding: 0 4px;
     }
 
     .header h2 {
       margin: 0;
       font-size: 1.25rem;
-      font-weight: 700;
+      font-weight: 600;
+      letter-spacing: -0.5px;
     }
 
     .nav-btn {
       background: none;
       border: none;
       color: var(--text-main);
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       padding: 8px 12px;
       cursor: pointer;
+      opacity: 0.8;
     }
 
-    /* 캘린더 그리드 */
+    .nav-btn:active {
+      opacity: 0.4;
+    }
+
+    /* 캘린더 그리드 및 틀 고정 */
     .calendar {
       background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
       border-radius: 20px;
       padding: 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
     }
 
     .weekdays {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       text-align: center;
-      font-weight: 600;
+      font-weight: 500;
       color: var(--text-muted);
       font-size: 0.85rem;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
+    /* 6주 고정 그리드 (6행 고정) */
     .days {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
+      grid-template-rows: repeat(6, 1fr);
       gap: 6px;
     }
 
     .day {
       aspect-ratio: 1;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       border-radius: 50%;
       font-size: 0.95rem;
-      font-weight: 500;
+      font-weight: 400;
       cursor: pointer;
       position: relative;
-      transition: background-color 0.2s;
+      transition: background-color 0.15s ease, color 0.15s ease;
     }
 
+    /* 달력 고정을 위한 빈 셀 */
     .day.empty {
       cursor: default;
+      pointer-events: none;
     }
 
     .day.today {
-      border: 1.5px solid var(--text-muted);
+      background-color: var(--card-border);
+      font-weight: 600;
     }
 
     /* OTT 시청한 날 */
     .day.watched {
       background-color: var(--accent-color);
-      color: #fff;
+      color: #ffffff;
       font-weight: 700;
     }
 
     .info-box {
-      margin-top: 20px;
+      margin-top: 16px;
       background: var(--card-bg);
+      border: 1px solid var(--card-border);
       border-radius: 16px;
       padding: 18px 16px;
       text-align: center;
     }
 
     .streak-highlight {
-      font-size: 1.1rem;
-      font-weight: bold;
+      font-size: 1.05rem;
+      font-weight: 600;
       color: var(--success-color);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      letter-spacing: -0.3px;
     }
 
     .info-box p {
       margin: 4px 0;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       color: var(--text-muted);
     }
 
     .info-box span.count {
       color: var(--accent-color);
-      font-weight: bold;
+      font-weight: 700;
     }
   </style>
 </head>
@@ -163,13 +180,12 @@
   <div class="info-box">
     <div class="streak-highlight" id="streakText">기록을 불러오는 중...</div>
     <p>이번 달 OTT 시청 횟수: <span class="count" id="monthCount">0</span>회</p>
-    <p style="font-size: 0.78rem; margin-top: 8px;">💡 날짜 터치 시 시청 기록 토글 가능</p>
+    <p style="font-size: 0.75rem; margin-top: 8px; opacity: 0.8;">💡 날짜 터치 시 시청 기록 토글 가능</p>
   </div>
 </div>
 
 <script>
   let currentDate = new Date();
-  // 로컬 스토리지에서 시청 기록 불러오기 (형식: ["YYYY-MM-DD", ...])
   let watchedDates = JSON.parse(localStorage.getItem('ott_watched_dates')) || [];
 
   const monthTitle = document.getElementById('monthTitle');
@@ -177,25 +193,19 @@
   const monthCount = document.getElementById('monthCount');
   const streakText = document.getElementById('streakText');
 
-  // 최근 시청일 기준 경과 일수 계산 함수
   function updateStreakInfo() {
     if (watchedDates.length === 0) {
       streakText.innerText = "📺 아직 시청 기록이 없습니다.";
       return;
     }
 
-    // 날짜 오름차순 정렬
     const sortedDates = [...watchedDates].sort();
-    
-    // 오늘 날짜 (시간 제거: YYYY-MM-DD 기준 계산)
     const today = new Date();
     const todayZero = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-    // 오늘 또는 오늘 이전의 가장 최근 시청 기록 찾기
     const pastOrTodayWatched = sortedDates.filter(d => new Date(d) <= todayZero);
 
     if (pastOrTodayWatched.length === 0) {
-      // 미래 날짜만 찍혀있는 경우
       streakText.innerText = "📺 최근 시청 기록이 없습니다.";
       return;
     }
@@ -204,7 +214,6 @@
     const [year, month, day] = lastWatchedStr.split('-').map(Number);
     const lastWatchedDate = new Date(year, month - 1, day);
 
-    // 날짜 차이 계산 (밀리초 -> 일수 변환)
     const diffTime = todayZero - lastWatchedDate;
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
@@ -221,66 +230,65 @@
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
 
-    // 헤더 월 표시
     monthTitle.innerText = `${year}년 ${month + 1}월`;
 
-    // 이번 달 첫날 및 마지막 날 정보
     const firstDayIndex = new Date(year, month, 1).getDay();
     const lastDate = new Date(year, month + 1, 0).getDate();
 
     calendarDays.innerHTML = '';
 
-    // 시작 빈 칸 추가
-    for (let i = 0; i < firstDayIndex; i++) {
-      const emptyDiv = document.createElement('div');
-      emptyDiv.classList.add('day', 'empty');
-      calendarDays.appendChild(emptyDiv);
-    }
-
-    // 날짜 렌더링
+    const TOTAL_CELLS = 42; // 6주 x 7일 = 42개 셀로 완전히 고정
     let currentMonthWatchedCount = 0;
     const today = new Date();
 
-    for (let day = 1; day <= lastDate; day++) {
+    for (let i = 0; i < TOTAL_CELLS; i++) {
       const dayDiv = document.createElement('div');
       dayDiv.classList.add('day');
-      dayDiv.innerText = day;
 
-      // 날짜 문자열 생성 (YYYY-MM-DD)
-      const formattedMonth = String(month + 1).padStart(2, '0');
-      const formattedDay = String(day).padStart(2, '0');
-      const dateString = `${year}-${formattedMonth}-${formattedDay}`;
+      // 달력 시작 전 빈 셀
+      if (i < firstDayIndex) {
+        dayDiv.classList.add('empty');
+      } 
+      // 해당 월의 날짜 셀
+      else if (i < firstDayIndex + lastDate) {
+        const day = i - firstDayIndex + 1;
+        dayDiv.innerText = day;
 
-      // 오늘 날짜 테두리 표시
-      if (year === today.getFullYear() && month === today.getMonth() && day === today.getDate()) {
-        dayDiv.classList.add('today');
-      }
+        const formattedMonth = String(month + 1).padStart(2, '0');
+        const formattedDay = String(day).padStart(2, '0');
+        const dateString = `${year}-${formattedMonth}-${formattedDay}`;
 
-      // 시청했는지 확인
-      if (watchedDates.includes(dateString)) {
-        dayDiv.classList.add('watched');
-        currentMonthWatchedCount++;
-      }
-
-      // 날짜 클릭/터치 이벤트 (시청 기록 토글)
-      dayDiv.addEventListener('click', () => {
-        if (watchedDates.includes(dateString)) {
-          watchedDates = watchedDates.filter(d => d !== dateString);
-        } else {
-          watchedDates.push(dateString);
+        if (year === today.getFullYear() && month === today.getMonth() && day === today.getDate()) {
+          dayDiv.classList.add('today');
         }
-        localStorage.setItem('ott_watched_dates', JSON.stringify(watchedDates));
-        renderCalendar();
-      });
+
+        if (watchedDates.includes(dateString)) {
+          dayDiv.classList.add('watched');
+          currentMonthWatchedCount++;
+        }
+
+        dayDiv.addEventListener('click', () => {
+          if (watchedDates.includes(dateString)) {
+            watchedDates = watchedDates.filter(d => d !== dateString);
+          } else {
+            watchedDates.push(dateString);
+          }
+          localStorage.setItem('ott_watched_dates', JSON.stringify(watchedDates));
+          renderCalendar();
+        });
+      } 
+      // 해당 월 끝난 후 남아있는 빈 셀 (고정 틀 유지)
+      else {
+        dayDiv.classList.add('empty');
+      }
 
       calendarDays.appendChild(dayDiv);
     }
 
     monthCount.innerText = currentMonthWatchedCount;
-    updateStreakInfo(); // 경과 일수 업데이트
+    updateStreakInfo();
   }
 
-  // 월 이동 버튼 이벤트
   document.getElementById('prevMonth').addEventListener('click', () => {
     currentDate.setMonth(currentDate.getMonth() - 1);
     renderCalendar();
@@ -291,7 +299,6 @@
     renderCalendar();
   });
 
-  // 초기 실행
   renderCalendar();
 </script>
 
